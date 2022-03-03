@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{147bdb2c-8f96-45fd-a47c-e6ecd2375b96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\uci">
+      <UniqueIdentifier>{f0a79d7f-11b9-43d5-821b-d01955a19c7a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\uci">
+      <UniqueIdentifier>{3433e3e6-f8ca-48c7-abd5-69d6189f9d65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\analyser">
+      <UniqueIdentifier>{9b9ee43f-f224-4a18-bc55-1d86e01f8fed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\analyser">
+      <UniqueIdentifier>{de3dc6e8-a262-425e-95ca-01391d8d87c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\codec">
+      <UniqueIdentifier>{2740afae-cc2d-4cce-b347-88f66b9ee4e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\codec">
+      <UniqueIdentifier>{57a8dcb9-d66d-47ca-afb0-697529419ce4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\piece_manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pieces.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\chessboard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\precomputed.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\generator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\serial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fen_import.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils_type.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\analyser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\uci\uci_debug.h">
+      <Filter>include\uci</Filter>
+    </ClInclude>
+    <ClInclude Include="include\analyser\chess_analyser.h">
+      <Filter>include\analyser</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ab_pruning_v2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\codec\fen_codec.h">
+      <Filter>include\codec</Filter>
+    </ClInclude>
+    <ClInclude Include="src\codec\fen_codec.cpp">
+      <Filter>Source Files\codec</Filter>
+    </ClInclude>
+    <ClInclude Include="include\uci\uci_manager.h">
+      <Filter>include\uci</Filter>
+    </ClInclude>
+    <ClInclude Include="include\uci\uci_command.h">
+      <Filter>include\uci</Filter>
+    </ClInclude>
+    <ClInclude Include="include\codec\str_codec.h">
+      <Filter>include\codec</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fen_import.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\serial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\piece_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="include\uci\uci_option.h">
+      <Filter>include\uci</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uci\uci_option_button.cpp">
+      <Filter>Source Files\uci</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uci\uci_option_check.cpp">
+      <Filter>Source Files\uci</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uci\uci_option_combo.cpp">
+      <Filter>Source Files\uci</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uci\uci_option_spin.cpp">
+      <Filter>Source Files\uci</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uci\uci_option_string.cpp">
+      <Filter>Source Files\uci</Filter>
+    </ClCompile>
+    <ClCompile Include="src\analyser\ab_pruning_v2.cpp">
+      <Filter>Source Files\analyser</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uci\uci_manager.cpp">
+      <Filter>Source Files\uci</Filter>
+    </ClCompile>
+    <ClCompile Include="src\codec\str_codec.cpp">
+      <Filter>Source Files\codec</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
