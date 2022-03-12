@@ -38,7 +38,7 @@ bool UciOption::Combo::set_value(std::string& value) {
 		}
 	}
 
-	std::cerr << "Invalid usage of 'setoption'. UciOptionType::COMBO element does not exist [" << value << "]" << std::endl;
+	fprintf(stderr, "Invalid usage of 'setoption'. UciOptionType::COMBO element does not exist [%s]\n", value.c_str());
 	return false;
 }
 

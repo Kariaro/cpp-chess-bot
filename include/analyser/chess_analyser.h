@@ -1,31 +1,19 @@
-#pragma once
-
 #ifndef CHESS_ANALYSER_H
 #define CHESS_ANALYSER_H
 
-#include "../../include/uci/uci_option.h"
 #include <thread>
 
+#include "../../include/uci/uci_option.h"
 #include "../../src/utils.h"
 
 struct ChessAnalysis {
 	Chessboard board{};
 	Move bestmove{};
 	Move ponder{};
-	uint64_t m_max_time{0};
+	uint32_t m_max_time{0};
 };
 
 class ChessAnalyser {
-public:
-	ChessAnalysis* m_analysis{nullptr};
-	std::vector<UciOption*> m_options;
-	std::thread m_thread;
-	bool m_running{false};
-	bool m_stop{true};
-
-	/// This method is called when an option changes	
-	virtual void on_option_change(UciOption* option) = 0;
-	
 public:
 	ChessAnalyser() = default;
 
@@ -62,6 +50,16 @@ public:
 
 	/// Start analyse the position
 	virtual bool start_analysis(ChessAnalysis& analysis) = 0;
+
+protected:
+	/// This method is called when an option changes
+	virtual void on_option_change(UciOption* option) = 0;
+
+	ChessAnalysis* m_analysis{ nullptr };
+	std::vector<UciOption*> m_options;
+	std::thread m_thread;
+	bool m_running{ false };
+	bool m_stop{ true };
 };
 
-#endif // !CHESS_ANALYSER_H
+#endif // CHESS_ANALYSER_H

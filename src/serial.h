@@ -1,10 +1,8 @@
-#pragma once
-
 #ifndef SERIAL_H
 #define SERIAL_H
 
-#include "utils_type.h"
 #include <string>
+#include "utils_type.h"
 
 namespace Serial {
 	extern inline int get_piece_value(int piece);
@@ -19,10 +17,7 @@ namespace Serial {
 
 	extern char* getBoardString(Chessboard* board);
 
-	// new
-
 	extern std::string get_move_string(Move& move);
 }
 
-#endif // !SERIAL_H
-
+#endif // SERIAL_H

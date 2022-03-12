@@ -7,12 +7,12 @@ bool _isValid(Chessboard& board, uint32_t fromIdx, uint32_t toIdx, uint32_t spec
 	if constexpr (T == SM::NORMAL) {
 		int oldFrom = board.pieces[fromIdx];
 		int oldTo = board.pieces[toIdx];
-			
+		
 		Board::setPiece(board, fromIdx, Pieces::NONE);
 		Board::setPiece(board, toIdx, oldFrom);
-			
+		
 		bool isValid = !PieceManager::isKingAttacked(board, isWhite);
-			
+		
 		Board::setPiece(board, fromIdx, oldFrom);
 		Board::setPiece(board, toIdx, oldTo);
 
@@ -25,7 +25,7 @@ bool _isValid(Chessboard& board, uint32_t fromIdx, uint32_t toIdx, uint32_t spec
 				|| PieceManager::isAttacked(board, fromIdx + 1)
 				|| PieceManager::isAttacked(board, fromIdx + 2));
 		}
-					
+		
 		if ((special & CastlingFlags::ANY_CASTLE_Q) != 0) {
 			return !(PieceManager::isAttacked(board, fromIdx)
 				|| PieceManager::isAttacked(board, fromIdx - 1)
@@ -40,13 +40,13 @@ bool _isValid(Chessboard& board, uint32_t fromIdx, uint32_t toIdx, uint32_t spec
 		int remIdx = toIdx + (isWhite ? -8 : 8);
 		int oldRem = board.pieces[remIdx];
 		int oldTo = board.pieces[toIdx];
-					
+		
 		Board::setPiece(board, fromIdx, Pieces::NONE);
 		Board::setPiece(board, remIdx, Pieces::NONE);
 		Board::setPiece(board, toIdx, oldFrom);
-					
+		
 		bool isValid = !PieceManager::isKingAttacked(board, isWhite);
-					
+		
 		Board::setPiece(board, fromIdx, oldFrom);
 		Board::setPiece(board, remIdx, oldRem);
 		Board::setPiece(board, toIdx, oldTo);
@@ -57,13 +57,13 @@ bool _isValid(Chessboard& board, uint32_t fromIdx, uint32_t toIdx, uint32_t spec
 	if constexpr (T == SM::PROMOTION) {
 		int oldFrom = board.pieces[fromIdx];
 		int oldTo = board.pieces[toIdx];
-					
+		
 		Board::setPiece(board, fromIdx, Pieces::NONE);
 		// Because the promotion just blocks we do not need to calculate what type the piece is
 		Board::setPiece(board, toIdx, oldFrom); //((special >> 3) & 7) * (isWhite ? 1 : -1));
-					
+		
 		bool isValid = !PieceManager::isKingAttacked(board, isWhite);
-					
+		
 		Board::setPiece(board, fromIdx, oldFrom);
 		Board::setPiece(board, toIdx, oldTo);
 		
@@ -79,180 +79,6 @@ bool _isValid(Chessboard& board, Move& move) {
 }
 
 namespace Generator {
-	std::vector<Move> generate_valid_quiesce_moves(Chessboard& board) {
-		// 128 -> ~ 48.3 sec
-		//  96 -> ~ 48.0 sec
-		//  64 -> ~ 53.8 sec
-		std::vector<Move> vector_moves;
-		vector_moves.reserve(96);
-
-		bool isWhite = Board::isWhite(board);
-		uint64_t mask = isWhite ? board.whiteMask : board.blackMask;
-
-		while (mask != 0) {
-			uint64_t pick = Utils::lowestOneBit(mask);
-			mask &= ~pick;
-			uint32_t idx = (uint32_t)Utils::numberOfTrailingZeros(pick);
-
-			int piece = board.pieces[idx];
-			uint64_t moves = PieceManager::piece_move(board, piece, idx);
-
-			while (moves != 0) {
-				uint64_t move_bit = Utils::lowestOneBit(moves);
-				moves &= ~move_bit;
-				uint32_t move_idx = (uint32_t)Utils::numberOfTrailingZeros(move_bit);
-
-				if (board.pieces[move_idx] != 0 && _isValid<SM::NORMAL>(board, idx, move_idx, 0)) {
-					vector_moves.push_back({ idx, move_idx, 0, true });
-				}
-			}
-
-			int pieceSq = piece * piece;
-			if (pieceSq == 1 || pieceSq == 36) {
-				uint32_t special = (uint32_t)PieceManager::special_piece_move(board, piece, idx);
-				int type = special & 0b11000000;
-				if (type == SM::CASTLING) {
-					// Split the castling moves up into multiple moves
-					uint32_t specialFlag;
-					if ((specialFlag = (special & CastlingFlags::ANY_CASTLE_K)) != 0) {
-						Move move = { idx, (uint32_t)(idx + 2), (uint32_t)(SM::CASTLING | specialFlag), true };
-						if (_isValid<SM::CASTLING>(board, move)) {
-							vector_moves.push_back(move);
-						}
-					}
-					if ((specialFlag = (special & CastlingFlags::ANY_CASTLE_Q)) != 0) {
-						Move move = { idx, (uint32_t)(idx - 2), (uint32_t)(SM::CASTLING | specialFlag), true };
-						if (_isValid<SM::CASTLING>(board, move)) {
-							vector_moves.push_back(move);
-						}
-					}
-				} else if (type == SM::EN_PASSANT) {
-					if (_isValid<SM::EN_PASSANT>(board, idx, special & 0b111111, special)) {
-						vector_moves.push_back({ idx, (uint32_t)(special & 0b111111), special, true });
-					}
-				} else if (type == SM::PROMOTION) {
-					// Split promotion into multiple moves
-					uint32_t toIdx = (uint32_t)(idx + (isWhite ? 8 : -8));
-					uint32_t specialFlag;
-					if ((specialFlag = (special & Promotion::LEFT)) != 0) {
-						for (uint32_t promotionPiece : PROMOTION_PIECES) {
-							Move move = { idx, (uint32_t)(toIdx - 1), (uint32_t)(SM::PROMOTION | promotionPiece << 3 | specialFlag), true };
-							if (_isValid<SM::PROMOTION>(board, move)) {
-								vector_moves.push_back(move);
-							}
-						}
-					}
-					if ((specialFlag = (special & Promotion::MIDDLE)) != 0) {
-						for (uint32_t promotionPiece : PROMOTION_PIECES) {
-							Move move = { idx, (uint32_t)(toIdx), (uint32_t)(SM::PROMOTION | promotionPiece << 3 | specialFlag), true };
-							if (_isValid<SM::PROMOTION>(board, move)) {
-								vector_moves.push_back(move);
-							}
-						}
-					}
-					if ((specialFlag = (special & Promotion::RIGHT)) != 0) {
-						for (uint32_t promotionPiece : PROMOTION_PIECES) {
-							Move move = { idx, (uint32_t)(toIdx + 1), (uint32_t)(SM::PROMOTION | promotionPiece << 3 | specialFlag), true };
-							if (_isValid<SM::PROMOTION>(board, move)) {
-								vector_moves.push_back(move);
-							}
-						}
-					}
-				}
-			}
-		}
-
-		return vector_moves;
-	}
-
-	std::vector<Move> generate_valid_moves(Chessboard& board) {
-		// 128 -> ~ 48.3 sec
-		//  96 -> ~ 48.0 sec
-		//  64 -> ~ 53.8 sec
-		std::vector<Move> vector_moves;
-		vector_moves.reserve(96);
-
-		bool isWhite = Board::isWhite(board);
-		uint64_t mask = isWhite ? board.whiteMask : board.blackMask;
-		
-		while (mask != 0) {
-			uint64_t pick = Utils::lowestOneBit(mask);
-			mask &= ~pick;
-			uint32_t idx = (uint32_t)Utils::numberOfTrailingZeros(pick);
-			
-			int piece = board.pieces[idx];
-			uint64_t moves = PieceManager::piece_move(board, piece, idx);
-			
-			while (moves != 0) {
-				uint64_t move_bit = Utils::lowestOneBit(moves);
-				moves &= ~move_bit;
-				uint32_t move_idx = (uint32_t)Utils::numberOfTrailingZeros(move_bit);
-				
-				if (isValid(board, idx, move_idx, 0)) {
-					vector_moves.push_back({ idx, move_idx, 0, true });
-				}
-			}
-			
-			int pieceSq = piece * piece;
-			if (pieceSq == 1 || pieceSq == 36) {
-				uint32_t special = (uint32_t)PieceManager::special_piece_move(board, piece, idx);
-				int type = special & 0b11000000;
-				if (type == SM::CASTLING) {
-					// Split the castling moves up into multiple moves
-					uint32_t specialFlag;
-					if ((specialFlag = (special & CastlingFlags::ANY_CASTLE_K)) != 0) {
-						Move move = { idx, (uint32_t)(idx + 2), (uint32_t)(SM::CASTLING | specialFlag), true };
-						if (isValid(board, move)) {
-							vector_moves.push_back(move);
-						}
-					}
-					if ((specialFlag = (special & CastlingFlags::ANY_CASTLE_Q)) != 0) {
-						Move move = { idx, (uint32_t)(idx - 2), (uint32_t)(SM::CASTLING | specialFlag), true };
-						if (isValid(board, move)) {
-							vector_moves.push_back(move);
-						}
-					}
-
-				} else if (type == SM::EN_PASSANT) {
-					if (isValid(board, idx, special & 0b111111, special)) {
-						vector_moves.push_back({ idx, (uint32_t)(special & 0b111111), special, true });
-					}
-
-				} else if (type == SM::PROMOTION) {
-					// Split promotion into multiple moves
-					uint32_t toIdx = (uint32_t)(idx + (isWhite ? 8 : -8));
-					uint32_t specialFlag;
-					if ((specialFlag = (special & Promotion::LEFT)) != 0) {
-						for (uint32_t promotionPiece : PROMOTION_PIECES) {
-							Move move = { idx, (uint32_t)(toIdx - 1), (uint32_t)(SM::PROMOTION | promotionPiece << 3 | specialFlag), true };
-							if (isValid(board, move)) {
-								vector_moves.push_back(move);
-							}
-						}
-					}
-					if ((specialFlag = (special & Promotion::MIDDLE)) != 0) {
-						for (uint32_t promotionPiece : PROMOTION_PIECES) {
-							Move move = { idx, (uint32_t)(toIdx), (uint32_t)(SM::PROMOTION | promotionPiece << 3 | specialFlag), true };
-							if (isValid(board, move)) {
-								vector_moves.push_back(move);
-							}
-						}
-					}
-					if ((specialFlag = (special & Promotion::RIGHT)) != 0) {
-						for (uint32_t promotionPiece : PROMOTION_PIECES) {
-							Move move = { idx, (uint32_t)(toIdx + 1), (uint32_t)(SM::PROMOTION | promotionPiece << 3 | specialFlag), true };
-							if (isValid(board, move)) {
-								vector_moves.push_back(move);
-							}
-						}
-					}
-				}
-			}
-		}
-
-		return vector_moves;
-	}
-
 	bool isValid(Chessboard& board, uint32_t fromIdx, uint32_t toIdx, uint32_t special) {
 		bool isWhite = Board::isWhite(board);
 		

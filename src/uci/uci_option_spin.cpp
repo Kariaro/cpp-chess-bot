@@ -35,13 +35,12 @@ bool UciOption::Spin::set_value(std::string& value) {
 	int num = std::strtol(value.c_str(), &endPos, 10);
 
 	if ((value.c_str() + value.length()) != endPos) {
-		std::cerr << "Invalid usage of 'setoption'. UciOptionType::SPIN not all characters was a number [" << value << "]" << std::endl;
+		fprintf(stderr, "Invalid usage of 'setoption'. UciOptionType::SPIN not all characters was a number [%s]\n", value.c_str());
 		return false;
 	}
 
 	if (num < m_min || num > m_max) {
-		std::cerr << "Invalid usage of 'setoption'. UciOptionType::SPIN number is outside ranges ["
-			<< m_min << ", " << m_max << "],  [" << value << "]" << std::endl;
+		fprintf(stderr, "Invalid usage of 'setoption'. UciOptionType::SPIN number is outside ranges [%lld, %lld], [%s]\n", m_min, m_max, value.c_str());
 		return false;
 	}
 

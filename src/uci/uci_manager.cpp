@@ -1,48 +1,45 @@
+#include <iostream>
+
+// TODO: Make relative paths
 #include "../../include/uci/uci_manager.h"
 #include "../../include/codec/fen_codec.h"
 #include "../../include/codec/str_codec.h"
-// won't compile without this
-#include "../codec/fen_codec.cpp"
-#include "../codec/str_codec.cpp"
-
 #include "../generator.h"
 #include "../serial.h"
 
-#include <iostream>
-
 void _Debug_options(ChessAnalyser* analyser) {
 	for (UciOption* option : analyser->get_options()) {
-		std::cerr << "into string [" << option->get_key() << "] ";
+		fprintf(stderr, "info string [%s] ", option->get_key().c_str());
 
 		switch (option->get_type()) {
-		case UciOptionType::CHECK: {
-			UciOption::Check* opt = (UciOption::Check*)option;
-			std::cerr << "[check] = " << (opt->get_value() ? "true" : "false") << std::endl;
-			break;
-		}
-		case UciOptionType::SPIN: {
-			UciOption::Spin* opt = (UciOption::Spin*)option;
-			std::cerr << "[spin] = " << opt->get_value() << std::endl;
-			break;
-		}
-		case UciOptionType::COMBO: {
-			UciOption::Combo* opt = (UciOption::Combo*)option;
-			std::cerr << "[combo] = " << opt->get_list()[opt->get_value()] << std::endl;
-			break;
-		}
-		case UciOptionType::BUTTON: {
-			std::cerr << "[button]" << std::endl;
-			break;
-		}
-		case UciOptionType::STRING: {
-			UciOption::String* opt = (UciOption::String*)option;
-			std::cerr << "[string] = " << opt->get_value() << std::endl;
-			break;
-		}
-		default: {
-			std::cerr << "Undefined UciOptionType ( " << (int)option->get_type() << " )" << std::endl;
-			break;
-		}
+			case UciOptionType::CHECK: {
+				UciOption::Check* opt = (UciOption::Check*)option;
+				fprintf(stderr, "[check] = %s\n", opt->get_value() ? "true" : "false");
+				break;
+			}
+			case UciOptionType::SPIN: {
+				UciOption::Spin* opt = (UciOption::Spin*)option;
+				fprintf(stderr, "[spin] = %lld\n", opt->get_value());
+				break;
+			}
+			case UciOptionType::COMBO: {
+				UciOption::Combo* opt = (UciOption::Combo*)option;
+				fprintf(stderr, "[combo] = %s\n", opt->get_list()[opt->get_value()].c_str());
+				break;
+			}
+			case UciOptionType::BUTTON: {
+				fprintf(stderr, "[button]\n");
+				break;
+			}
+			case UciOptionType::STRING: {
+				UciOption::String* opt = (UciOption::String*)option;
+				fprintf(stderr, "[string] = %s\n", opt->get_value().c_str());
+				break;
+			}
+			default: {
+				fprintf(stderr, "Undefined UciOptionType ( %d )\n", (int)option->get_type());
+				break;
+			}
 		}
 
 		option++;
@@ -107,7 +104,7 @@ bool UciManager::process_go(std::string command) {
 	}
 
 	if (!command.empty()) {
-		std::cerr << "Failed to fully parse the go command" << std::endl;
+		fprintf(stderr, "Failed to fully parse the go command\n");
 	}
 
 	bool is_white = Board::isWhite(m_analysis.board);
@@ -115,9 +112,9 @@ bool UciManager::process_go(std::string command) {
 	uint64_t turn_time = is_white ? wtime : btime;
 
 	if (infinite) {
-		m_analysis.m_max_time = 10000000000;
+		m_analysis.m_max_time = (uint32_t)(100000000);
 	} else {
-		m_analysis.m_max_time = turn_time > 100000 ? 10000 : ((turn_time / 10) + 1);
+		m_analysis.m_max_time = (uint32_t)(turn_time > 100000 ? 10000 : ((turn_time / 10) + 1));
 	}
 	m_analyser->start_analysis(m_analysis);
 
@@ -125,7 +122,7 @@ bool UciManager::process_go(std::string command) {
 }
 
 bool UciManager::process_position_moves(std::string command) {
-	// std::cerr << "Remaining: [" << command << "]" << std::endl;
+	// fprintf(stderr, "Remaining: [%s]\n", command.c_str());
 
 	while (!command.empty()) {
 		size_t first_space = command.find_first_of(' ');
@@ -137,11 +134,11 @@ bool UciManager::process_position_moves(std::string command) {
 			command = "";
 		}
 
-		// std::cerr << "into string [" << move_str << "]" << std::endl;
+		// fprintf(stderr, "info string [%s]\n", move_str.c_str());
 		bool found = false;
 		std::vector<Move> moves = Generator::generate_valid_moves(m_analysis.board);
 		for (Move move : moves) {
-			// std::cerr << "into string [" << move_str << "] <=> [" << Serial::get_move_string(move) << "]" << std::endl;
+			// fprintf(stderr, "info string [%s] <=> [%s]\n", move_str.c_str(), Serial::get_move_string(move).c_str());
 
 			if (move_str == Serial::get_move_string(move)) {
 				found = Generator::playMove(m_analysis.board, move);
@@ -150,7 +147,7 @@ bool UciManager::process_position_moves(std::string command) {
 		}
 
 		if (!found) {
-			std::cerr << "into string Could not play the move [" << move_str << "]" << std::endl;
+			fprintf(stderr, "into string Could not play the move [%s]\n", move_str.c_str());
 			return false;
 		}
 	}
@@ -163,7 +160,7 @@ bool UciManager::process_position(std::string command) {
 		command = command.substr(13);
 		int matched;
 		if (Codec::FEN::import_fen(m_analysis.board, command, matched) != FEN_CODEC_SUCCESSFUL) {
-			std::cerr << "Invalid usage of 'position fen'. Invalid fen [" << command << "]" << std::endl;
+			fprintf(stderr, "Invalid usage of 'position fen'. Invalid fen [%s]\n", command.c_str());
 			return false;
 		}
 
@@ -172,12 +169,12 @@ bool UciManager::process_position(std::string command) {
 		command = command.substr(17);
 		int matched;
 		if (Codec::FEN::import_fen(m_analysis.board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0", matched) != FEN_CODEC_SUCCESSFUL) {
-			std::cerr << "Invalid usage of 'position fen'. Invalid fen [" << command << "]" << std::endl;
+			fprintf(stderr, "Invalid usage of 'position fen'. Invalid fen [%s]\n", command.c_str());
 			return false;
 		}
 
 	} else {
-		std::cerr << "Invalid usage of 'position'. Expected 'fen' or 'startpos' but got [" << command << "]" << std::endl;
+		fprintf(stderr, "Invalid usage of 'position'. Expected 'fen' or 'startpos' but got [%s]\n", command.c_str());
 		return false;
 	}
 
@@ -185,7 +182,7 @@ bool UciManager::process_position(std::string command) {
 	if (command.empty()) {
 		return true;
 	} else if (command[0] != ' ') {
-		std::cerr << "Invalid usage of 'position'. Expected space after fen [" << command << "]" << std::endl;
+		fprintf(stderr, "Invalid usage of 'position'. Expected space after fen [%s]\n", command.c_str());
 		return false;
 	}
 
@@ -199,7 +196,7 @@ bool UciManager::process_position(std::string command) {
 
 bool UciManager::process_setoption(std::string command) {
 	if (!command._Starts_with("setoption name ")) {
-		std::cerr << "Invalid usage of 'setoption' [" << command << "]" << std::endl;
+		fprintf(stderr, "Invalid usage of 'setoption' [%s]\n", command.c_str());
 		return false;
 	}
 
@@ -215,7 +212,7 @@ bool UciManager::process_setoption(std::string command) {
 	}
 
 	if (option == nullptr) {
-		std::cerr << "Invalid usage of 'setoption'. The option [" << command << "] does not exist" << std::endl;
+		fprintf(stderr, "Invalid usage of 'setoption'. The option [%s] does not exist\n", command.c_str());
 		return false;
 	}
 
@@ -224,7 +221,7 @@ bool UciManager::process_setoption(std::string command) {
 
 	if (option->get_type() != UciOptionType::BUTTON) {
 		if (!command._Starts_with(" value ")) {
-			std::cerr << "Invalid usage of 'setoption'. Value tag was missing" << std::endl;
+			fprintf(stderr, "Invalid usage of 'setoption'. Value tag was missing\n");
 			return false;
 		}
 
@@ -239,9 +236,11 @@ bool UciManager::process_debug_command(std::string command) {
 	if (command == "@debugoptions") {
 		_Debug_options(m_analyser);
 	} else if (command == "@debugboard") {
-		std::cerr << Serial::getBoardString(&m_analysis.board) << std::endl;
+		char* chars = Serial::getBoardString(&m_analysis.board);
+		fprintf(stderr, "%s\n", chars);
+		free(chars);
 	} else if (command == "@debugfen") {
-		std::cerr << Codec::FEN::export_fen(m_analysis.board) << std::endl;
+		fprintf(stderr, "%s\n", Codec::FEN::export_fen(m_analysis.board).c_str());
 	}
 
 	return true;
@@ -249,14 +248,14 @@ bool UciManager::process_debug_command(std::string command) {
 
 bool UciManager::process_command(std::string command) {
 	if (command == "uci") {
-		std::cout << "id name " << m_name << std::endl
-				  << "id author " << m_author << std::endl;
+		printf("id name %s\n", m_name.c_str());
+		printf("id author %s\n", m_author.c_str());
 
 		for (UciOption* option : m_analyser->get_options()) {
-			std::cout << option->to_string() << std::endl;
+			printf("%s\n", option->to_string().c_str());
 		}
 
-		std::cout << "uciok" << std::endl;
+		printf("uciok\n");
 		return true;
 	} else if (command == "ucinewgame") {
 		return true;
@@ -267,7 +266,7 @@ bool UciManager::process_command(std::string command) {
 		m_running = false;
 		return true;
 	} else if (command == "isready") {
-		std::cout << "readyok" << std::endl;
+		printf("readyok\n");
 		return true;
 	}
 
@@ -278,6 +277,7 @@ bool UciManager::process_command(std::string command) {
 	if (command._Starts_with("setoption")) {
 		return process_setoption(command);
 	} else if (command._Starts_with("position")) {
+		// TODO: calulate the hash of each board and store them to check for threefold repetition
 		return process_position(command);
 	} else if (command._Starts_with("@")) {
 		return process_debug_command(command);
@@ -298,7 +298,7 @@ void UciManager::run() {
 		std::getline(std::cin, command);
 		if (!process_command(command)) {
 			// Invalid command
-			std::cerr << "Unknown uci command [" << command << "]" << std::endl;
+			fprintf(stderr, "Unknown uci command [%s]\n", command.c_str());
 		}
 	}
 }

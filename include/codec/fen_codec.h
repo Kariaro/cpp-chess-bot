@@ -1,10 +1,8 @@
-#pragma once
-
 #ifndef FEN_CODEC_H
 #define FEN_CODEC_H
 
-#include "../../src/utils.h"
 #include <string>
+#include "../../src/utils.h"
 
 constexpr int FEN_CODEC_SUCCESSFUL        = 0;
 constexpr int FEN_CODEC_INVALID_FILE      = 1;
@@ -16,11 +14,9 @@ constexpr int FEN_CODEC_INVALID_TURN      = 6;
 constexpr int FEN_CODEC_INVALID_FORMAT    = 7;
 
 namespace Codec::FEN {
-	/// Import a fen string
-	extern int import_fen(Chessboard& board, std::string str, int& matched_chars);
-
-	/// Export a board to fen
-	extern std::string export_fen(Chessboard& board);
+	int import_fen(Chessboard& board, std::string str, int& matched_chars);
+	int import_fen(Chessboard& board, std::string str);
+	std::string export_fen(Chessboard& board);
 }
 
-#endif // !FEN_CODEC_H
+#endif // FEN_CODEC_H

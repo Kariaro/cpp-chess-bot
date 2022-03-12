@@ -1,8 +1,4 @@
 #include "../ab_pruning_v2.h"
-#include "../piece_manager.h"
-#include <chrono>
-#include <thread>
-#include <iostream>
 
 constexpr double NEGATIVE_INFINITY = -1000000000.0;
 constexpr double POSITIVE_INFINITY =  1000000000.0;
@@ -96,19 +92,19 @@ double an_get_advanced_material(Chessboard& a_board, Move& a_lastMove) {
 }
 
 void an_update_moves(Move& move, BranchResult& result, BranchResult& branch) {
-	result.numMoves = branch.numMoves + 1;
-	result.moves[0] = move;
-	memcpy(result.moves + 1, branch.moves, sizeof(Move) * branch.numMoves);
+	result.m_num_moves = branch.m_num_moves + 1;
+	result.m_moves[0] = move;
+	memcpy(result.m_moves + 1, branch.m_moves, sizeof(Move) * branch.m_num_moves);
 }
 
-template<bool WHITE>
+template<bool White>
 double an_quiesce(Chessboard& a_parent, Move a_lastMove, int depth, double alpha, double beta) {
 	double evaluation = an_get_advanced_material(a_parent, a_lastMove);
 	if (depth == 0) {
 		return evaluation;
 	}
 	
-	if constexpr (WHITE) {
+	if constexpr (White) {
 		if (evaluation >= beta) {
 			return beta;
 		}
@@ -127,7 +123,9 @@ double an_quiesce(Chessboard& a_parent, Move a_lastMove, int depth, double alpha
 	}
 	
 	Chessboard board = a_parent;
-	std::vector<Move> moves = Generator::generate_valid_quiesce_moves(board);
+	std::vector<Move> moves;// = Generator::generate_valid_quiesce_moves(board);
+	moves.reserve(96);
+	Generator::_Generate_valid_quiesce_moves<White>(moves, board);
 
 	double value = evaluation;
 	for (Move move : moves) {
@@ -136,8 +134,8 @@ double an_quiesce(Chessboard& a_parent, Move a_lastMove, int depth, double alpha
 			continue;
 		}
 
-		double score = an_quiesce<!WHITE>(board, move, depth - 1, alpha, beta);
-		if constexpr (WHITE) {
+		double score = an_quiesce<!White>(board, move, depth - 1, alpha, beta);
+		if constexpr (White) {
 			if (score >= beta) {
 				return beta;
 			}
@@ -167,7 +165,7 @@ bool ABPruningV2::should_stop() {
 	if (!m_stop && m_max_time != 0) {
 		using namespace std::chrono;
 		int64_t time = (int64_t)(duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count() - m_start_time);
-		// std::cerr << "time=" << time << " max=" << m_max_time << std::endl;
+		// fprintf(stderr, "time=%lld max=%lld\n", time, m_max_time);
 
 		if (time > m_max_time) {
 			m_stop = true;
@@ -178,8 +176,9 @@ bool ABPruningV2::should_stop() {
 	return m_stop;
 }
 
-long an_total_nodes;
-long an_nodes;
+uint64_t an_total_nodes;
+uint64_t an_nodes;
+
 template <bool White>
 BranchResult ABPruningV2::analyse_branches(Chessboard& a_parent, Move& a_lastMove, int depth, double alpha, double beta) {
 	an_total_nodes++;
@@ -195,7 +194,10 @@ BranchResult ABPruningV2::analyse_branches(Chessboard& a_parent, Move& a_lastMov
 	
 	// Default state of the board
 	Chessboard board = a_parent;
-	std::vector<Move> moves = Generator::generate_valid_moves(board);
+	//std::vector<Move> moves = Generator::generate_valid_moves(board);
+	std::vector<Move> moves;
+	moves.reserve(96);
+	Generator::_Generate_valid_moves<White>(moves, board);
 	double value;
 	
 	BranchResult result{};
@@ -211,9 +213,9 @@ BranchResult ABPruningV2::analyse_branches(Chessboard& a_parent, Move& a_lastMov
 		
 		BranchResult scannedResult = analyse_branches<!White>(board, move, depth - 1, alpha, beta);
 		if constexpr (White) {
-			if (value < scannedResult.value) {
+			if (value < scannedResult.m_value) {
 				an_update_moves(move, result, scannedResult);
-				value = scannedResult.value;
+				value = scannedResult.m_value;
 			}
 			
 			if (value >= beta) {
@@ -222,9 +224,9 @@ BranchResult ABPruningV2::analyse_branches(Chessboard& a_parent, Move& a_lastMov
 			
 			alpha = alpha > value ? alpha : value;
 		} else {
-			if (value > scannedResult.value) {
+			if (value > scannedResult.m_value) {
 				an_update_moves(move, result, scannedResult);
-				value = scannedResult.value;
+				value = scannedResult.m_value;
 			}
 			
 			if (value <= alpha) {
@@ -237,7 +239,7 @@ BranchResult ABPruningV2::analyse_branches(Chessboard& a_parent, Move& a_lastMov
 		board = a_parent;
 	}
 
-	result.value = value;
+	result.m_value = value;
 	board = a_parent;
 	
 	if (countMoves == 0) {
@@ -246,10 +248,10 @@ BranchResult ABPruningV2::analyse_branches(Chessboard& a_parent, Move& a_lastMov
 		
 		if (PieceManager::_Is_king_attacked<White>(board)) {
 			// Checkmate
-			result.value = (MATE_MULTIPLIER * (depth + 1)) * (White ? -1 : 1);
+			result.m_value = (MATE_MULTIPLIER * (depth + 1)) * (White ? -1 : 1);
 		} else {
 			// Stalemate
-			result.value = 0;
+			result.m_value = 0;
 		}
 	}
 
@@ -299,35 +301,35 @@ Scanner ABPruningV2::analyse_branch_moves(Chessboard& a_parent, int a_depth) {
 		if (!scan.best.valid) {
 			scan.best.valid = true;
 			scan.best = move;
-			scan.m_branch_result.numMoves = 0;
+			scan.m_branch_result.m_num_moves = 0;
 		}
 
-		auto start = std::chrono::high_resolution_clock::now();
+		using namespace std::chrono;
+		auto start = high_resolution_clock::now();
 		an_nodes = 0;
 		BranchResult branchResult = is_parent_white
-			? analyse_branches<false>(board, move, a_depth, NEGATIVE_INFINITY, POSITIVE_INFINITY)
-			: analyse_branches<true>(board, move, a_depth, NEGATIVE_INFINITY, POSITIVE_INFINITY);
+			? analyse_branches<BLACK>(board, move, a_depth, NEGATIVE_INFINITY, POSITIVE_INFINITY)
+			: analyse_branches<WHITE>(board, move, a_depth, NEGATIVE_INFINITY, POSITIVE_INFINITY);
 
 		if (m_stop && a_depth > 0) {
 			break;
 		}
 
-		auto finish = std::chrono::high_resolution_clock::now();
-		double scannedResult = branchResult.value;
+		auto finish = high_resolution_clock::now();
+		double scannedResult = branchResult.m_value;
 		
 		{
-			std::cerr << "move: " << Serial::get_move_string(move) << "(" << scannedResult / 100.0 << "), [";
+			fprintf(stderr, "move: %s (%.2f), [", Serial::get_move_string(move).c_str(), scannedResult / 100.0);
 
-			for (int i = 0; i < branchResult.numMoves; i++) {
+			for (int i = 0; i < branchResult.m_num_moves; i++) {
 				if (i > 0) {
-					std::cerr << ", ";
+					fprintf(stderr, ", ");
 				}
 
-				Move m = branchResult.moves[i];
-				std::cerr << Serial::get_move_string(m);
+				fprintf(stderr, "%s", Serial::get_move_string(branchResult.m_moves[i]).c_str());
 			}
-			auto timeTook = std::chrono::duration_cast<std::chrono::nanoseconds>(finish-start).count();
-			std::cerr << "]\t" << (long)(an_nodes / (timeTook / 1000000000.0)) << " nodes / sec" << std::endl;
+			auto timeTook = duration_cast<nanoseconds>(finish-start).count();
+			fprintf(stderr, "]\t %lld nodes / sec\n", (int64_t)(an_nodes / (timeTook / 1000000000.0)));
 		}
 
 		if (is_parent_white) {
@@ -379,7 +381,7 @@ ABPruningV2::ABPruningV2() {
 }
 
 void ABPruningV2::on_option_change(UciOption* option) {
-	// std::cerr << "info string option change: " << option->get_key() << std::endl;
+	// fprintf(stderr, "into string option change: %s\n", option->get_key());
 }
 
 void ABPruningV2::thread_loop(ChessAnalysis* a_analysis) {
@@ -387,46 +389,74 @@ void ABPruningV2::thread_loop(ChessAnalysis* a_analysis) {
 
 	using namespace std::chrono;
 
-	m_start_time = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+	auto start_time = system_clock::now();
+	m_start_time = duration_cast<milliseconds>(start_time.time_since_epoch()).count();
 	m_max_time = a_analysis->m_max_time;
 	a_analysis->bestmove = { 0, 0, 0, false };
 
-	// TODO: This engine does not want to do checkmates.... FIX THIS
 	Move best_move{};
+	int64_t total_time = 0;
+
+	int mul = (Board::isWhite(a_analysis->board) ? 1 : -1);
 	for (int i = 0; i < DEPTH && !m_stop; i++) {
 		an_total_nodes = 0;
+		start_time = system_clock::now();
+
 		Scanner scanner = analyse_branch_moves(a_analysis->board, i);
+		int64_t millis = duration_cast<milliseconds>(system_clock::now() - start_time).count();
 		if (i == 0 || !m_stop) {
 			int score = (int)(scanner.bestMaterial);
 			int mate = (int)(score / MATE_MULTIPLIER);
 
-			std::cout << "info depth " << (i + 1) << " nodes " << an_total_nodes << " score ";
-			
+			std::stringstream pv_stream;
+			pv_stream << Serial::get_move_string(scanner.best);
+			for (int j = 0; j < scanner.m_branch_result.m_num_moves; j++) {
+				pv_stream << " " << Serial::get_move_string(scanner.m_branch_result.m_moves[j]);
+			}
+
+			std::stringstream sc_stream;
 			if (mate != 0) {
-				std::cout << "mate " << (DEPTH - (mate < 0 ? -mate : mate) + 1);
+				// odd moves we are getting mated
+				// even moves we are checkmating the opponent
+				int dir = 1 - ((scanner.m_branch_result.m_num_moves & 1) * 2);
+				sc_stream << "mate " << (dir * (((i - (mate < 0 ? -mate : mate)) / 2) + 1));
 			} else {
-				std::cout << "cp " << score;
+				sc_stream << "cp " << mul * score;
 			}
-			
-			std::cout << " pv " << Serial::get_move_string(scanner.best);
-			for (int j = 0; j < scanner.m_branch_result.numMoves; j++) {
-				std::cout << " " << Serial::get_move_string(scanner.m_branch_result.moves[j]);
-			}
-			std::cout << std::endl;
+
+			printf("info depth %d time %lld nodes %lld nps %lld score %s pv %s\n",
+				i + 1,
+				millis,
+				an_total_nodes,
+				(an_total_nodes * 1000ull) / (millis + 1),
+				sc_stream.str().c_str(),
+				pv_stream.str().c_str()
+			);
+			fflush(stdout);
 
 			a_analysis->bestmove = scanner.best;
 			best_move = scanner.best;
 		}
+
+		if (total_time + millis * 4 > m_max_time)
+		{
+			// Check if we have enough time 
+			break;
+		}
+
+		total_time += millis;
 	}
 
 	// Print the best move value for the engine
-	std::cout << "bestmove " << Serial::get_move_string(best_move) << std::endl;
+	printf("bestmove %s\n", Serial::get_move_string(best_move).c_str());
+	fflush(stdout);
+	
 	m_stop = true;
 }
 
 bool ABPruningV2::stop_analysis() {
 	if (m_stop) {
-		std::cerr << "Thread has already been closed!" << std::endl;
+		fprintf(stderr, "Thread has already been closed!\n");
 		return false;
 	}
 
@@ -440,7 +470,7 @@ bool ABPruningV2::stop_analysis() {
 
 bool ABPruningV2::start_analysis(ChessAnalysis& a_analysis) {
 	if (!m_stop) {
-		std::cerr << "Thread has already been started!" << std::endl;
+		fprintf(stderr, "Thread has already been started!\n");
 		return false;
 	}
 

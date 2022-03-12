@@ -16,7 +16,7 @@ UciOptionType UciOption::Button::get_type() {
 
 bool UciOption::Button::set_value(std::string& value) {
 	if (!value.empty()) {
-		std::cerr << "Invalid usage of 'setoption'. UciOptionType::BUTTON does not allow non empty values [" << value << "]" << std::endl;
+		fprintf(stderr, "Invalid usage of 'setoption'. UciOptionType::BUTTON does not allow non empty values [%s]\n", value.c_str());
 		return false;
 	}
 

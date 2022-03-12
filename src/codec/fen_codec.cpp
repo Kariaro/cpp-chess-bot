@@ -1,9 +1,9 @@
 #include <sstream>
-#include "../../include/codec/fen_codec.h"
+#include "../include/codec/fen_codec.h"
 #include "../serial.h"
 #include "../pieces.h"
 
-int _Read_number(const std::string& str, int& matched) {
+static int _Read_number(const std::string& str, int& matched) {
 	int value = std::atoi(str.c_str() + matched);
 
 	int loop = value;
@@ -15,7 +15,7 @@ int _Read_number(const std::string& str, int& matched) {
 	return value;
 }
 
-int _Read_square(std::string& str, int matched) {
+static int _Read_square(std::string& str, int matched) {
 	int file = str[matched      ] - 'a';
 	int rank = str[matched + 1ll] - '1';
 
@@ -55,7 +55,6 @@ int Codec::FEN::import_fen(Chessboard& board, std::string str, int& matched) {
 				}
 
 				file = 0;
-
 				continue;
 			}
 
@@ -81,8 +80,9 @@ int Codec::FEN::import_fen(Chessboard& board, std::string str, int& matched) {
 					break;
 				}
 
-				default:
+				default: {
 					return FEN_CODEC_INVALID_CHARACTER;
+				}
 			}
 
 			if (file > 8) {
@@ -186,12 +186,10 @@ int Codec::FEN::import_fen(Chessboard& board, std::string str, int& matched) {
 	return FEN_CODEC_SUCCESSFUL;
 }
 
-/*
 int Codec::FEN::import_fen(Chessboard& board, std::string str) {
 	int temp;
 	return Codec::FEN::import_fen(board, str, temp);
 }
-*/
 
 std::string Codec::FEN::export_fen(Chessboard& board) {
 	std::stringstream ss;

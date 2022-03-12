@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef UCI_OPTION_H
 #define UCI_OPTION_H
 
@@ -137,4 +135,4 @@ public:
 	virtual std::string to_string();
 };
 
-#endif // !UCI_OPTION_H
+#endif // UCI_OPTION_H

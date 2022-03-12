@@ -20,4 +20,8 @@ struct Move {
 	bool valid;
 };
 
-#define _ForceInline inline
+#define _ForceInline __forceinline
+#define _Inline inline
+
+constexpr bool WHITE = true;
+constexpr bool BLACK = false;

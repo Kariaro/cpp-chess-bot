@@ -1,10 +1,8 @@
-#pragma once
-
 #ifndef UCI_MANAGER_H
 #define UCI_MANAGER_H
 
-#include "../../include/analyser/chess_analyser.h"
 #include <string>
+#include "../../include/analyser/chess_analyser.h"
 
 // TODO: Potential name 'CLIManager'
 class UciManager {
@@ -34,4 +32,4 @@ private:
 	bool m_running;
 };
 
-#endif // !UCI_MANAGER_H
+#endif // UCI_MANAGER_H

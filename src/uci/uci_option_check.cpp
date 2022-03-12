@@ -28,7 +28,7 @@ bool UciOption::Check::set_value(std::string& value) {
 	} else if (value == "false") {
 		m_val = false;
 	} else {
-		std::cerr << "Invalid usage of 'setoption'. UciOptionType::CHECK does not allow the value [" << value << "]" << std::endl;
+		fprintf(stderr, "Invalid usage of 'setoption'. UciOptionType::CHECK does not allow the value [%s]\n", value.c_str());
 		return false;
 	}
 
