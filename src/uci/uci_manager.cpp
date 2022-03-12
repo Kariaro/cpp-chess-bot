@@ -1,9 +1,8 @@
 #include <iostream>
 
-// TODO: Make relative paths
-#include "../../include/uci/uci_manager.h"
-#include "../../include/codec/fen_codec.h"
-#include "../../include/codec/str_codec.h"
+#include "uci_manager.h"
+#include "../codec/fen_codec.h"
+#include "../codec/str_codec.h"
 #include "../generator.h"
 #include "../serial.h"
 

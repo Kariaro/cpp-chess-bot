@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef PIECE_MANAGER_H
 #define PIECE_MANAGER_H
 

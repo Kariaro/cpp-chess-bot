@@ -1,7 +1,8 @@
-#pragma once
+#ifndef UTILS_TYPE_H
+#define UTILS_TYPE_H
+
 #include <cinttypes>
 
-// TODO: We could maybe split this into multiple boards
 struct Chessboard {
 	int8_t pieces[64];
 	uint64_t pieceMask;
@@ -25,3 +26,5 @@ struct Move {
 
 constexpr bool WHITE = true;
 constexpr bool BLACK = false;
+
+#endif // UTILS_TYPE_H

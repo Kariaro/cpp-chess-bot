@@ -2,7 +2,7 @@
 #define FEN_CODEC_H
 
 #include <string>
-#include "../../src/utils.h"
+#include "../utils.h"
 
 constexpr int FEN_CODEC_SUCCESSFUL        = 0;
 constexpr int FEN_CODEC_INVALID_FILE      = 1;

@@ -3,8 +3,8 @@
 
 #include <thread>
 
-#include "../../include/uci/uci_option.h"
-#include "../../src/utils.h"
+#include "../uci/uci_option.h"
+#include "../utils.h"
 
 struct ChessAnalysis {
 	Chessboard board{};

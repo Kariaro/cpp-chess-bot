@@ -5,7 +5,7 @@
 #include "utils_type.h"
 #include "utils.h"
 #include "chessboard.h"
-#include "../include/codec/fen_codec.h"
+#include "codec/fen_codec.h"
 #include "serial.h"
 #include "pieces.h"
 #include "piece_manager.h"

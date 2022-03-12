@@ -27,13 +27,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="include\uci\uci_option.h" />
     <ClCompile Include="src\analyser\ab_pruning_v2.cpp" />
-    <ClCompile Include="src\codec\fen_codec.cpp" />
     <ClCompile Include="src\generator.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\piece_manager.cpp" />
     <ClCompile Include="src\serial.cpp" />
+    <ClCompile Include="src\codec\fen_codec.cpp" />
     <ClCompile Include="src\uci\uci_manager.cpp" />
     <ClCompile Include="src\uci\uci_option_button.cpp" />
     <ClCompile Include="src\uci\uci_option_check.cpp" />
@@ -42,19 +41,20 @@
     <ClCompile Include="src\uci\uci_option_string.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\analyser\chess_analyser.h" />
-    <ClInclude Include="include\codec\fen_codec.h" />
-    <ClInclude Include="include\codec\str_codec.h" />
-    <ClInclude Include="include\uci\uci_debug.h" />
-    <ClInclude Include="include\uci\uci_manager.h" />
-    <ClInclude Include="src\ab_pruning_v2.h" />
+    <ClInclude Include="src\analyser\ab_pruning_v2.h" />
+    <ClInclude Include="src\analyser\chess_analyser.h" />
     <ClInclude Include="src\chessboard.h" />
     <ClInclude Include="src\codec\fen_codec.cpp" />
+    <ClInclude Include="src\codec\fen_codec.h" />
+    <ClInclude Include="src\codec\str_codec.h" />
     <ClInclude Include="src\generator.h" />
     <ClInclude Include="src\pieces.h" />
     <ClInclude Include="src\piece_manager.h" />
     <ClInclude Include="src\precomputed.h" />
     <ClInclude Include="src\serial.h" />
+    <ClInclude Include="src\uci\uci_debug.h" />
+    <ClInclude Include="src\uci\uci_manager.h" />
+    <ClInclude Include="src\uci\uci_option.h" />
     <ClInclude Include="src\utils.h" />
     <ClInclude Include="src\utils_type.h" />
   </ItemGroup>

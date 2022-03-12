@@ -1,11 +1,6 @@
-#pragma once
-
-#ifndef UCI_OPTION_COMBO_CPP
-#define UCI_OPTION_COMBO_CPP
-
-#include "../../include/uci/uci_debug.h"
-#include "../../include/uci/uci_option.h"
 #include <sstream>
+#include "uci_debug.h"
+#include "uci_option.h"
 
 UciOption::Combo::Combo(const std::string& key, std::initializer_list<std::string> list, int64_t def) : UciOption(key), m_def(def), m_val(def) {
 	for (const std::string& str : list) {
@@ -52,5 +47,3 @@ std::string UciOption::Combo::to_string() {
 
 	return ss.str();
 }
-
-#endif // !UCI_OPTION_COMBO_CPP

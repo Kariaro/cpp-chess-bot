@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef PRECOMPUTED_H
 #define PRECOMPUTED_H
 
@@ -255,5 +253,5 @@ namespace PrecomputedTable {
 	};
 }
 
-#endif // !PRECOMPUTED_H
+#endif // PRECOMPUTED_H
 

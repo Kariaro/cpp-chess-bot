@@ -1,10 +1,5 @@
-#pragma once
-
-#ifndef UCI_OPTION_SPIN_CPP
-#define UCI_OPTION_SPIN_CPP
-
-#include "../../include/uci/uci_debug.h"
-#include "../../include/uci/uci_option.h"
+#include "uci_debug.h"
+#include "uci_option.h"
 
 UciOption::Spin::Spin(const std::string& key, int64_t min, int64_t max, int64_t def) : UciOption(key), m_min(min), m_max(max), m_def(def), m_val(def) {
 	
@@ -51,5 +46,3 @@ bool UciOption::Spin::set_value(std::string& value) {
 std::string UciOption::Spin::to_string() {
 	return "option name " + m_key + " type spin default " + std::to_string(m_def) + " min " + std::to_string(m_min) + " max " + std::to_string(m_max);
 }
-
-#endif // !UCI_OPTION_SPIN_CPP

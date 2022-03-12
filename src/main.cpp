@@ -4,9 +4,9 @@
 
 #include "serial.h"
 #include "generator.h"
-#include "ab_pruning_v2.h"
-#include "../include/uci/uci_manager.h"
-#include "../include/codec/fen_codec.h"
+#include "analyser/ab_pruning_v2.h"
+#include "uci/uci_manager.h"
+#include "codec/fen_codec.h"
 
 template <bool White>
 long goDepth(Chessboard& a_parent, int a_depth) {

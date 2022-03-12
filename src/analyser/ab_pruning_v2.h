@@ -5,12 +5,12 @@
 #include <thread>
 #include <iostream>
 #include <sstream>
-#include "../include/analyser/chess_analyser.h"
-#include "generator.h"
-#include "chessboard.h"
-#include "pieces.h"
-#include "serial.h"
-#include "piece_manager.h"
+#include "chess_analyser.h"
+#include "../generator.h"
+#include "../chessboard.h"
+#include "../pieces.h"
+#include "../serial.h"
+#include "../piece_manager.h"
 
 constexpr int DEPTH = 7;
 

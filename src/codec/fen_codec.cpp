@@ -1,5 +1,5 @@
 #include <sstream>
-#include "../include/codec/fen_codec.h"
+#include "fen_codec.h"
 #include "../serial.h"
 #include "../pieces.h"
 

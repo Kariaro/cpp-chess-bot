@@ -1,4 +1,4 @@
-#include "../ab_pruning_v2.h"
+#include "ab_pruning_v2.h"
 
 constexpr double NEGATIVE_INFINITY = -1000000000.0;
 constexpr double POSITIVE_INFINITY =  1000000000.0;

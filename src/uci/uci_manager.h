@@ -2,7 +2,7 @@
 #define UCI_MANAGER_H
 
 #include <string>
-#include "../../include/analyser/chess_analyser.h"
+#include "../analyser/chess_analyser.h"
 
 // TODO: Potential name 'CLIManager'
 class UciManager {
