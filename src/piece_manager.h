@@ -220,15 +220,6 @@ namespace PieceManager {
 
 		if constexpr (White) {
 			uint64_t _mask = (~board.whiteMask) & board.blackMask;
-			uint64_t _rook_move = _Rook_move(pieceMask, idx) & _mask;
-			if (_Has_two_piece<Pieces::B_ROOK, Pieces::B_QUEEN>(board, _rook_move)) {
-				return true;
-			}
-
-			uint64_t _bishop_move = _Bishop_move(pieceMask, idx) & _mask;
-			if (_Has_two_piece<Pieces::B_BISHOP, Pieces::B_QUEEN>(board, _bishop_move)) {
-				return true;
-			}
 
 			uint64_t _knight_move = _Knight_move(idx) & _mask;
 			if (_Has_piece<Pieces::B_KNIGHT>(board, _knight_move)) {
@@ -241,18 +232,21 @@ namespace PieceManager {
 			}
 
 			uint64_t _pawn_move = _White_pawn_attack(idx) & _mask;
-			return _Has_piece<Pieces::B_PAWN>(board, _pawn_move);
-		} else {
-			uint64_t _mask = (~board.blackMask) & board.whiteMask;
+			if (_Has_piece<Pieces::B_PAWN>(board, _pawn_move)) {
+				return true;
+			}
+
 			uint64_t _rook_move = _Rook_move(pieceMask, idx) & _mask;
-			if (_Has_two_piece<Pieces::W_ROOK, Pieces::W_QUEEN>(board, _rook_move)) {
+			if (_Has_two_piece<Pieces::B_ROOK, Pieces::B_QUEEN>(board, _rook_move)) {
 				return true;
 			}
 
 			uint64_t _bishop_move = _Bishop_move(pieceMask, idx) & _mask;
-			if (_Has_two_piece<Pieces::W_BISHOP, Pieces::W_QUEEN>(board, _bishop_move)) {
+			if (_Has_two_piece<Pieces::B_BISHOP, Pieces::B_QUEEN>(board, _bishop_move)) {
 				return true;
 			}
+		} else {
+			uint64_t _mask = (~board.blackMask) & board.whiteMask;
 
 			uint64_t _knight_move = _Knight_move(idx) & _mask;
 			if (_Has_piece<Pieces::W_KNIGHT>(board, _knight_move)) {
@@ -265,8 +259,22 @@ namespace PieceManager {
 			}
 
 			uint64_t _pawn_move = _Black_pawn_attack(idx) & _mask;
-			return _Has_piece<Pieces::W_PAWN>(board, _pawn_move);
+			if (_Has_piece<Pieces::W_PAWN>(board, _pawn_move)) {
+				return true;
+			}
+
+			uint64_t _rook_move = _Rook_move(pieceMask, idx) & _mask;
+			if (_Has_two_piece<Pieces::W_ROOK, Pieces::W_QUEEN>(board, _rook_move)) {
+				return true;
+			}
+
+			uint64_t _bishop_move = _Bishop_move(pieceMask, idx) & _mask;
+			if (_Has_two_piece<Pieces::W_BISHOP, Pieces::W_QUEEN>(board, _bishop_move)) {
+				return true;
+			}
 		}
+
+		return false;
 	}
 
 	template <bool White>
@@ -299,7 +307,7 @@ namespace PieceManager {
 
 		// Add the kings position
 		//return (PrecomputedTable::KNIGHT_MOVES[idx] | PrecomputedTable::ROOK_MOVES[idx] | PrecomputedTable::BISHOP_MOVES[idx]) | (1ull << idx);
-		return PrecomputedTable::KNIGHT_MOVES[idx] | _Queen_move(mask, idx) | (1ull << idx);
+		return (idx == -1) ? 0 : (PrecomputedTable::KNIGHT_MOVES[idx] | _Queen_move(mask, idx) | (1ull << idx));
 	}
 }
 

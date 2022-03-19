@@ -1,85 +1,7 @@
 #include "generator.h"
 
-template <int T>
-bool _isValid(Chessboard& board, uint32_t fromIdx, uint32_t toIdx, uint32_t special) {
-	bool isWhite = Board::isWhite(board);
-	
-	if constexpr (T == SM::NORMAL) {
-		int oldFrom = board.pieces[fromIdx];
-		int oldTo = board.pieces[toIdx];
-		
-		Board::setPiece(board, fromIdx, Pieces::NONE);
-		Board::setPiece(board, toIdx, oldFrom);
-		
-		bool isValid = !PieceManager::isKingAttacked(board, isWhite);
-		
-		Board::setPiece(board, fromIdx, oldFrom);
-		Board::setPiece(board, toIdx, oldTo);
-
-		return isValid;
-	}
-	
-	if constexpr (T == SM::CASTLING) {
-		if ((special & CastlingFlags::ANY_CASTLE_K) != 0) {
-			return !(PieceManager::isAttacked(board, fromIdx)
-				|| PieceManager::isAttacked(board, fromIdx + 1)
-				|| PieceManager::isAttacked(board, fromIdx + 2));
-		}
-		
-		if ((special & CastlingFlags::ANY_CASTLE_Q) != 0) {
-			return !(PieceManager::isAttacked(board, fromIdx)
-				|| PieceManager::isAttacked(board, fromIdx - 1)
-				|| PieceManager::isAttacked(board, fromIdx - 2));
-		}
-
-		return false;
-	}
-	
-	if constexpr (T == SM::EN_PASSANT) {
-		int oldFrom = board.pieces[fromIdx];
-		int remIdx = toIdx + (isWhite ? -8 : 8);
-		int oldRem = board.pieces[remIdx];
-		int oldTo = board.pieces[toIdx];
-		
-		Board::setPiece(board, fromIdx, Pieces::NONE);
-		Board::setPiece(board, remIdx, Pieces::NONE);
-		Board::setPiece(board, toIdx, oldFrom);
-		
-		bool isValid = !PieceManager::isKingAttacked(board, isWhite);
-		
-		Board::setPiece(board, fromIdx, oldFrom);
-		Board::setPiece(board, remIdx, oldRem);
-		Board::setPiece(board, toIdx, oldTo);
-		
-		return isValid;
-	}
-	
-	if constexpr (T == SM::PROMOTION) {
-		int oldFrom = board.pieces[fromIdx];
-		int oldTo = board.pieces[toIdx];
-		
-		Board::setPiece(board, fromIdx, Pieces::NONE);
-		// Because the promotion just blocks we do not need to calculate what type the piece is
-		Board::setPiece(board, toIdx, oldFrom); //((special >> 3) & 7) * (isWhite ? 1 : -1));
-		
-		bool isValid = !PieceManager::isKingAttacked(board, isWhite);
-		
-		Board::setPiece(board, fromIdx, oldFrom);
-		Board::setPiece(board, toIdx, oldTo);
-		
-		return isValid;
-	}
-
-	return false;
-}
-
-template <int T>
-bool _isValid(Chessboard& board, Move& move) {
-	return _isValid<T>(board, move.from, move.to, move.special);
-}
-
 namespace Generator {
-	bool isValid(Chessboard& board, uint32_t fromIdx, uint32_t toIdx, uint32_t special) {
+	bool isValid(Chessboard& board, uint8_t fromIdx, uint8_t toIdx, uint8_t special) {
 		bool isWhite = Board::isWhite(board);
 		
 		if (special == 0) {
@@ -155,11 +77,31 @@ namespace Generator {
 		}
 	}
 	
-	bool isValid(Chessboard& board, Move& move) {
-		return isValid(board, move.from, move.to, move.special);
+	bool isValid(Chessboard& board, const Move move) {
+		return isValid(board, get_move_from(move), get_move_to(move), get_move_special(move));
 	}
+
+	template <int Piece>
+	inline void test_setPiece(Chessboard& board, uint32_t idx, int piece) {
+		int old = board.pieces[idx];
+		board.pieces[idx] = piece;
+
+		uint64_t mask = (uint64_t)(1ull) << idx;
+		if constexpr (piece >= 0) {
+			if (old < 0) board.blackMask &= ~mask;
+		}
+
+		if constexpr (piece <= 0) {
+			if (old > 0) board.whiteMask &= ~mask;
+		}
+
+		if constexpr (piece > 0) board.whiteMask |= mask;
+		if constexpr (piece < 0) board.blackMask |= mask;
+		board.pieceMask = board.blackMask | board.whiteMask;
+	}
+
 	
-	bool playMove(Chessboard& board, uint32_t fromIdx, uint32_t toIdx, uint32_t special) {
+	bool playMove(Chessboard& board, uint8_t fromIdx, uint8_t toIdx, uint8_t special) {
 		bool isWhite = Board::isWhite(board);
 		int mul = isWhite ? 1 : -1;
 		
@@ -247,25 +189,26 @@ namespace Generator {
 					}
 				}
 				
-				Board::setPiece(board, fromIdx, Pieces::NONE);
+				//Board::setPiece(board, fromIdx, Pieces::NONE);
+				Board::setPiece<Pieces::NONE>(board, fromIdx);
 				Board::setPiece(board, toIdx, oldFrom);
 				break;
 			}
 			
 			case SM::CASTLING: {
 				if ((special & CastlingFlags::ANY_CASTLE_K) != 0) {
-					Board::setPiece(board, fromIdx + 3, Pieces::NONE);
+					Board::setPiece<Pieces::NONE>(board, fromIdx + 3);
 					Board::setPiece(board, fromIdx + 2, Pieces::KING * mul);
 					Board::setPiece(board, fromIdx + 1, Pieces::ROOK * mul);
-					Board::setPiece(board, fromIdx, Pieces::NONE);
+					Board::setPiece<Pieces::NONE>(board, fromIdx);
 					board.flags &= isWhite ? ~CastlingFlags::WHITE_CASTLE_ANY : ~CastlingFlags::BLACK_CASTLE_ANY;
 				}
 				
 				if ((special & CastlingFlags::ANY_CASTLE_Q) != 0) {
-					Board::setPiece(board, fromIdx - 4, Pieces::NONE);
+					Board::setPiece<Pieces::NONE>(board, fromIdx - 4);
 					Board::setPiece(board, fromIdx - 2, Pieces::KING * mul);
 					Board::setPiece(board, fromIdx - 1, Pieces::ROOK * mul);
-					Board::setPiece(board, fromIdx, Pieces::NONE);
+					Board::setPiece<Pieces::NONE>(board, fromIdx);
 					board.flags &= isWhite ? ~CastlingFlags::WHITE_CASTLE_ANY : ~CastlingFlags::BLACK_CASTLE_ANY;
 				}
 
@@ -277,8 +220,8 @@ namespace Generator {
 				int remIdx = toIdx - 8 * mul; // + (isWhite ? -8 : 8);
 				
 				nextLastCapture = 0;
-				Board::setPiece(board, fromIdx, Pieces::NONE);
-				Board::setPiece(board, remIdx, Pieces::NONE);
+				Board::setPiece<Pieces::NONE>(board, fromIdx);
+				Board::setPiece<Pieces::NONE>(board, remIdx);
 				Board::setPiece(board, toIdx, oldFrom);
 				break;
 			}
@@ -292,7 +235,7 @@ namespace Generator {
 					case Pieces::KNIGHT:
 					case Pieces::ROOK: {
 						int oldFrom = board.pieces[fromIdx];
-						Board::setPiece(board, fromIdx, Pieces::NONE);
+						Board::setPiece<Pieces::NONE>(board, fromIdx);
 						Board::setPiece(board, toIdx, piece * mul);
 						
 						if (oldFrom != 0) {
@@ -315,7 +258,7 @@ namespace Generator {
 		return true;
 	}
 	
-	bool playMove(Chessboard& board, Move& move) {
-		return playMove(board, move.from, move.to, move.special);
+	bool playMove(Chessboard& board, const Move move) {
+		return playMove(board, get_move_from(move), get_move_to(move), get_move_special(move));
 	}
 }

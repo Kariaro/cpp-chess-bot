@@ -34,18 +34,18 @@ public:
 	ABPruningV2();
 
 	virtual bool stop_analysis();
-	virtual bool start_analysis(ChessAnalysis& a_analysis);
+	virtual bool start_analysis(ChessAnalysis& analysis);
 
 protected:
-	virtual void on_option_change(UciOption* a_option);
+	virtual void on_option_change(UciOption* option);
 
 private:
-	void thread_loop(ChessAnalysis* a_analysis);
+	void thread_loop(ChessAnalysis* analysis);
 	bool should_stop();
 
 	template <bool White>
-	BranchResult analyse_branches(Chessboard& a_parent, Move& a_lastMove, int a_depth, double a_alpha, double a_beta);
-	Scanner analyse_branch_moves(Chessboard& a_parent, int a_depth);
+	BranchResult analyse_branches(Chessboard& parent, const Move lastMove, int depth, double alpha, double beta);
+	Scanner analyse_branch_moves(Chessboard& parent, int depth);
 
 	uint64_t m_start_time{};
 	uint32_t m_max_time{};

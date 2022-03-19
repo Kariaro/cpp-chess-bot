@@ -9,10 +9,10 @@ namespace Utils {
         return (uint64_t)((int64_t)(i) & -(int64_t)(i));
     }
 
-    inline uint32_t numberOfTrailingZeros(uint64_t i) {
+    inline uint8_t numberOfTrailingZeros(uint64_t i) {
         unsigned long r;
         _BitScanForward64(&r, i);
-        return r;
+        return (uint8_t)r;
     }
 }
 

@@ -107,6 +107,7 @@ namespace Serial {
 		return buffer;
 	}
 
+	/*
 	char* getMoveString(uint32_t from, uint32_t to, uint32_t special) {
 		char* buffer = (char*)calloc(8, sizeof(char));
 		if (!buffer) {
@@ -124,48 +125,48 @@ namespace Serial {
 
 		return buffer;
 	}
+	*/
 
 	std::string get_move_string(Move& move) {
 		// null moves
-		if ((move.from == move.to) && move.from == 0) {
+		uint8_t move_from = get_move_from(move);
+		uint8_t move_to = get_move_to(move);
+		uint8_t move_special = get_move_special(move);
+
+		if ((move_from == move_to) && move_from == 0) {
 			return "0000";
 		}
 
 		std::stringstream ss;
-		ss << (char)('a' + (move.from & 7))
-		   << (char)('1' + ((move.from >> 3) & 7))
-		   << (char)('a' + (move.to & 7))
-		   << (char)('1' + ((move.to >> 3) & 7));
+		ss << (char)('a' + (move_from & 7))
+		   << (char)('1' + ((move_from >> 3) & 7))
+		   << (char)('a' + (move_to & 7))
+		   << (char)('1' + ((move_to >> 3) & 7));
 
-		if ((move.special & 0b11000000) == SM::PROMOTION) {
-			ss << (char)get_piece_character(-(int)((move.special >> 3) & 0b111));
+		if ((move_special & 0b11000000) == SM::PROMOTION) {
+			ss << (char)get_piece_character(-(int)((move_special >> 3) & 0b111));
 		}
 
 		return ss.str();
 	}
 
-	char* getBoardString(Chessboard* board) {
-		char* chars = (char*)malloc(128);
-		if (!chars) {
-			return 0;
-		}
+	std::string get_board_string(Chessboard& board) {
+		std::stringstream ss;
 
-		chars[127] = '\0';
-
-		char* ptr = chars;
 		for (int i = 0; i < 64; i++) {
 			int x = 7 - (i & 7);
 			int y = i >> 3;
+
 			int idx = x + (y << 3);
-			char c = get_piece_character(board->pieces[idx]);
+			char c = get_piece_character(board.pieces[idx]);
 
 			if (i > 0) {
-				*(ptr++) = ((i & 7) == 0) ? '\n' : ' ';
+				ss << ((i & 7) == 0) ? '\n' : ' ';
 			}
 
-			*(ptr++) = (c == '\0') ? '.' : c;
+			ss << (c == '\0') ? '.' : c;
 		}
 
-		return chars;
+		return ss.str();
 	}
 }

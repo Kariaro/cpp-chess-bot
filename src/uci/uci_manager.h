@@ -19,6 +19,7 @@ public:
 	/// Returns if this manager is active
 	bool running();
 private:
+	void print_perft(int depth);
 	bool process_go(std::string command);
 	bool process_position_moves(std::string command);
 	bool process_position(std::string command);

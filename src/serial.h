@@ -13,10 +13,7 @@ namespace Serial {
 	
 	char* getFancyMoveString(int piece, uint32_t from, uint32_t to, uint32_t special);
 
-	extern char* getMoveString(uint32_t from, uint32_t to, uint32_t special);
-
-	extern char* getBoardString(Chessboard* board);
-
+	extern std::string get_board_string(Chessboard& board);
 	extern std::string get_move_string(Move& move);
 }
 

@@ -53,9 +53,11 @@ int an_non_developing(Chessboard& a_board) {
 	return result * 3;
 }
 
-int an_un_developing(Chessboard& a_board, Move& a_move) {
-	int id = a_board.pieces[a_move.from];
-	int move_to = a_move.to;
+int an_un_developing(Chessboard& a_board, const Move a_move) {
+	uint8_t a_move_from = get_move_from(a_move);
+	uint8_t a_move_to = get_move_to(a_move);
+	int id = a_board.pieces[a_move_from];
+	int move_to = a_move_to;
 	int result = 0;
 
 	switch (id) {
@@ -84,22 +86,22 @@ int an_un_developing(Chessboard& a_board, Move& a_move) {
 	return result * 3;
 }
 
-double an_get_advanced_material(Chessboard& a_board, Move& a_lastMove) {
-	double material = an_get_material(a_board);
-	material += an_un_developing(a_board, a_lastMove);
-	material += an_non_developing(a_board);
+double an_get_advanced_material(Chessboard& board, const Move lastMove) {
+	double material = an_get_material(board);
+	material += an_un_developing(board, lastMove);
+	material += an_non_developing(board);
 	return material;
 }
 
-void an_update_moves(Move& move, BranchResult& result, BranchResult& branch) {
+void an_update_moves(const Move move, BranchResult& result, BranchResult& branch) {
 	result.m_num_moves = branch.m_num_moves + 1;
 	result.m_moves[0] = move;
 	memcpy(result.m_moves + 1, branch.m_moves, sizeof(Move) * branch.m_num_moves);
 }
 
 template<bool White>
-double an_quiesce(Chessboard& a_parent, Move a_lastMove, int depth, double alpha, double beta) {
-	double evaluation = an_get_advanced_material(a_parent, a_lastMove);
+double an_quiesce(Chessboard& a_parent, const Move lastMove, int depth, double alpha, double beta) {
+	double evaluation = an_get_advanced_material(a_parent, lastMove);
 	if (depth == 0) {
 		return evaluation;
 	}
@@ -180,12 +182,12 @@ uint64_t an_total_nodes;
 uint64_t an_nodes;
 
 template <bool White>
-BranchResult ABPruningV2::analyse_branches(Chessboard& a_parent, Move& a_lastMove, int depth, double alpha, double beta) {
+BranchResult ABPruningV2::analyse_branches(Chessboard& a_parent, const Move lastMove, int depth, double alpha, double beta) {
 	an_total_nodes++;
 	an_nodes++;
 	// Branch zero should always evaluate
 	if (depth == 0) {
-		return BranchResult{ an_quiesce<White>(a_parent, a_lastMove, QUIESCE_DEPTH, alpha, beta) };
+		return BranchResult{ an_quiesce<White>(a_parent, lastMove, QUIESCE_DEPTH, alpha, beta) };
 	}
 
 	if (should_stop()) {
@@ -265,12 +267,12 @@ void an_evaluate(Chessboard& board, Scanner& scan) {
 		double delta = isWhite ? -1 : 1;
 		scan.base += 10 * delta;
 		
-		if (!scan.best.valid) {
+		if (!get_move_valid(scan.best)) {
 			// Checkmate
 			scan.base = MATE_MULTIPLIER * delta;
 		}
 	} else {
-		if (!scan.best.valid) {
+		if (!get_move_valid(scan.best)) {
 			// Stalemate
 			scan.base = 0;
 		}
@@ -278,17 +280,19 @@ void an_evaluate(Chessboard& board, Scanner& scan) {
 	
 	if (board.lastCapture >= 50) {
 		// The game should end
-		scan.best.valid = false;
+		scan.best = set_move_valid(scan.best, false);
+		// scan.best.valid = false;
 	}
 }
 
-Scanner ABPruningV2::analyse_branch_moves(Chessboard& a_parent, int a_depth) {
+Scanner ABPruningV2::analyse_branch_moves(Chessboard& a_parent, int depth) {
 	bool is_parent_white = Board::isWhite(a_parent);
 
 	Scanner scan { };
 	scan.bestMaterial = is_parent_white ? NEGATIVE_INFINITY : POSITIVE_INFINITY;
 	scan.base = an_get_material(a_parent);
-	scan.best.valid = false;
+	//scan.best.valid = false;
+	scan.best = 0;
 	
 	Chessboard board = a_parent;
 	std::vector<Move> moves = Generator::generate_valid_moves(a_parent);
@@ -298,8 +302,8 @@ Scanner ABPruningV2::analyse_branch_moves(Chessboard& a_parent, int a_depth) {
 		}
 
 		// Make sure atleast one move is valid
-		if (!scan.best.valid) {
-			scan.best.valid = true;
+		if (!get_move_valid(scan.best)) {
+			//scan.best.valid = true;
 			scan.best = move;
 			scan.m_branch_result.m_num_moves = 0;
 		}
@@ -308,10 +312,10 @@ Scanner ABPruningV2::analyse_branch_moves(Chessboard& a_parent, int a_depth) {
 		auto start = high_resolution_clock::now();
 		an_nodes = 0;
 		BranchResult branchResult = is_parent_white
-			? analyse_branches<BLACK>(board, move, a_depth, NEGATIVE_INFINITY, POSITIVE_INFINITY)
-			: analyse_branches<WHITE>(board, move, a_depth, NEGATIVE_INFINITY, POSITIVE_INFINITY);
+			? analyse_branches<BLACK>(board, move, depth, NEGATIVE_INFINITY, POSITIVE_INFINITY)
+			: analyse_branches<WHITE>(board, move, depth, NEGATIVE_INFINITY, POSITIVE_INFINITY);
 
-		if (m_stop && a_depth > 0) {
+		if (m_stop && depth > 0) {
 			break;
 		}
 
@@ -392,7 +396,7 @@ void ABPruningV2::thread_loop(ChessAnalysis* a_analysis) {
 	auto start_time = system_clock::now();
 	m_start_time = duration_cast<milliseconds>(start_time.time_since_epoch()).count();
 	m_max_time = a_analysis->m_max_time;
-	a_analysis->bestmove = { 0, 0, 0, false };
+	a_analysis->bestmove = 0; // { 0, 0, 0, false };
 
 	Move best_move{};
 	int64_t total_time = 0;

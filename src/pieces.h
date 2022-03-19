@@ -36,7 +36,7 @@ enum Pieces {
 	PAWN_SQ = PAWN * PAWN,
 };
 
-enum SM {
+enum SM : uint8_t {
 	NORMAL     = 0b00000000,
 	EN_PASSANT = 0b01000000,
 	PROMOTION  = 0b10000000,

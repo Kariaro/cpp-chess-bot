@@ -47,6 +47,9 @@ void _Debug_options(ChessAnalyser* analyser) {
 
 UciManager::UciManager(const std::string author, const std::string name, ChessAnalyser* analyser) : m_author(author), m_name(name), m_analyser(analyser) {
 	m_running = true;
+
+	// Set the default board positions
+	Codec::FEN::import_fen(m_analysis.board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0");
 }
 
 /*
@@ -54,6 +57,77 @@ bool UciManager::process_ponderhit(std::string command) {
 	return false;
 }
 */
+
+template <bool White>
+static long goDepth(Chessboard& parent, int depth) {
+	if (depth < 2) {
+		return 1;
+	}
+
+	Chessboard board = parent;
+
+	std::vector<Move> moves;
+	moves.reserve(96);
+	Generator::_Generate_valid_moves<White>(moves, board);
+
+	long count = 0;
+	for (Move move : moves) {
+		if (!Generator::playMove(board, move)) {
+			continue;
+		}
+
+		count += goDepth<!White>(board, depth - 1);
+		// Generator::_Undo_move<White>(board, move);
+		board = parent;
+	}
+
+	return count;
+}
+
+template <bool White>
+static long computePerft(Chessboard& parent, int depth) {
+	Chessboard board = parent;
+	auto start = std::chrono::high_resolution_clock::now();
+	long totalCount = 0;
+	long count;
+
+	std::vector<Move> moves;
+	moves.reserve(96);
+	Generator::_Generate_valid_moves<White>(moves, board);
+
+	for (Move move : moves) {
+		if (!Generator::playMove(board, move)) {
+			continue;
+		}
+
+		count = goDepth<!White>(board, depth);
+
+		printf("%s: %d\n", Serial::get_move_string(move).c_str(), count);
+
+		totalCount += count;
+		board = parent;
+		//Generator::_Undo_move<White>(board, move);
+	}
+
+	auto finish = std::chrono::high_resolution_clock::now();
+	auto timeTook = std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count();
+
+	printf("\nTotal moves: %d\n", totalCount);
+	printf("Moves: %d / sec\n", (long)(totalCount / (timeTook / 1000000000.0)));
+	printf("Time: %.2f / sec\n", (timeTook / 1000000000.0));
+
+	return totalCount;
+}
+
+static long computePerft(Chessboard parent, int depth) {
+	return Board::isWhite(parent)
+		? computePerft<WHITE>(parent, depth)
+		: computePerft<BLACK>(parent, depth);
+}
+
+void UciManager::print_perft(int depth) {
+	computePerft(m_analysis.board, depth);
+}
 
 bool UciManager::process_go(std::string command) {
 	// http://wbec-ridderkerk.nl/html/UCIProtocol.html
@@ -70,6 +144,14 @@ bool UciManager::process_go(std::string command) {
 	uint64_t winc{};
 	uint64_t binc{};
 	bool infinite{};
+
+	if (command._Starts_with(" perft ")) {
+		command = command.substr(7);
+		uint64_t depth = 1;
+		command = Codec::STR::read_integer<uint64_t>(command, depth);
+		print_perft((int)depth);
+		return true;
+	}
 
 	if (command._Starts_with(" infinite")) {
 		infinite = true;
@@ -235,9 +317,7 @@ bool UciManager::process_debug_command(std::string command) {
 	if (command == "@debugoptions") {
 		_Debug_options(m_analyser);
 	} else if (command == "@debugboard") {
-		char* chars = Serial::getBoardString(&m_analysis.board);
-		fprintf(stderr, "%s\n", chars);
-		free(chars);
+		fprintf(stderr, "%s\n", Serial::get_board_string(m_analysis.board).c_str());
 	} else if (command == "@debugfen") {
 		fprintf(stderr, "%s\n", Codec::FEN::export_fen(m_analysis.board).c_str());
 	}
